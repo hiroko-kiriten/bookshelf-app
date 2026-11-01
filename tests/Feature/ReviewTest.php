@@ -19,14 +19,14 @@ class ReviewTest extends TestCase
         $book = Book::factory()->create();
 
         $response = $this->actingAs($user)->post(
-            '/books/' . $book->id . '/reviews',
+            '/books/'.$book->id.'/reviews',
             [
                 'rating' => 5,
                 'comment' => 'とても面白い本でした。',
             ]
         );
 
-        $response->assertRedirect('/books/' . $book->id);
+        $response->assertRedirect('/books/'.$book->id);
 
         $this->assertDatabaseHas('reviews', [
             'user_id' => $user->id,
@@ -43,7 +43,7 @@ class ReviewTest extends TestCase
         $book = Book::factory()->create();
 
         $response = $this->actingAs($user)->post(
-            '/books/' . $book->id . '/reviews',
+            '/books/'.$book->id.'/reviews',
             [
                 'rating' => 6,
                 'comment' => 'テストコメント',
@@ -61,7 +61,7 @@ class ReviewTest extends TestCase
         $book = Book::factory()->create();
 
         $response = $this->actingAs($user)->post(
-            '/books/' . $book->id . '/reviews',
+            '/books/'.$book->id.'/reviews',
             [
                 'rating' => 4,
                 'comment' => '',
@@ -84,7 +84,7 @@ class ReviewTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post(
-            '/books/' . $book->id . '/reviews',
+            '/books/'.$book->id.'/reviews',
             [
                 'rating' => 3,
                 'comment' => '2回目のレビュー',
@@ -105,7 +105,7 @@ class ReviewTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(
-            '/reviews/' . $review->id . '/edit'
+            '/reviews/'.$review->id.'/edit'
         );
 
         $response->assertOk();
@@ -122,7 +122,7 @@ class ReviewTest extends TestCase
         ]);
 
         $response = $this->actingAs($otherUser)->get(
-            '/reviews/' . $review->id . '/edit'
+            '/reviews/'.$review->id.'/edit'
         );
 
         $response->assertForbidden();
@@ -138,14 +138,14 @@ class ReviewTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->put(
-            '/reviews/' . $review->id,
+            '/reviews/'.$review->id,
             [
                 'rating' => 4,
                 'comment' => '更新したレビューです。',
             ]
         );
 
-        $response->assertRedirect('/books/' . $review->book_id);
+        $response->assertRedirect('/books/'.$review->book_id);
 
         $this->assertDatabaseHas('reviews', [
             'id' => $review->id,
@@ -167,7 +167,7 @@ class ReviewTest extends TestCase
         ]);
 
         $response = $this->actingAs($otherUser)->put(
-            '/reviews/' . $review->id,
+            '/reviews/'.$review->id,
             [
                 'rating' => 1,
                 'comment' => '変更を試みたレビュー',
@@ -193,10 +193,10 @@ class ReviewTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->delete(
-            '/reviews/' . $review->id
+            '/reviews/'.$review->id
         );
 
-        $response->assertRedirect('/books/' . $review->book_id);
+        $response->assertRedirect('/books/'.$review->book_id);
 
         $this->assertDatabaseMissing('reviews', [
             'id' => $review->id,
@@ -214,7 +214,7 @@ class ReviewTest extends TestCase
         ]);
 
         $response = $this->actingAs($otherUser)->delete(
-            '/reviews/' . $review->id
+            '/reviews/'.$review->id
         );
 
         $response->assertForbidden();

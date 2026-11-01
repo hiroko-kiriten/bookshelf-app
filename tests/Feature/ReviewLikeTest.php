@@ -25,7 +25,7 @@ class ReviewLikeTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post(
-            '/reviews/' . $review->id . '/like'
+            '/reviews/'.$review->id.'/like'
         );
 
         $this->assertDatabaseHas('review_likes', [
@@ -51,7 +51,7 @@ class ReviewLikeTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post(
-            '/reviews/' . $review->id . '/like'
+            '/reviews/'.$review->id.'/like'
         );
 
         $this->assertDatabaseMissing('review_likes', [
@@ -72,7 +72,7 @@ class ReviewLikeTest extends TestCase
         ]);
 
         $response = $this->post(
-            '/reviews/' . $review->id . '/like'
+            '/reviews/'.$review->id.'/like'
         );
 
         $response->assertRedirect('/login');

@@ -27,7 +27,7 @@ class BookTest extends TestCase
     {
         $book = Book::factory()->create();
 
-        $response = $this->get('/books/' . $book->id);
+        $response = $this->get('/books/'.$book->id);
 
         $response->assertOk();
     }
@@ -110,7 +110,7 @@ class BookTest extends TestCase
             'user_id' => $user->id,
         ]);
 
-        $response = $this->actingAs($user)->get('/books/' . $book->id . '/edit');
+        $response = $this->actingAs($user)->get('/books/'.$book->id.'/edit');
 
         $response->assertOk();
     }
@@ -124,7 +124,7 @@ class BookTest extends TestCase
             'user_id' => $owner->id,
         ]);
 
-        $response = $this->actingAs($otherUser)->get('/books/' . $book->id . '/edit');
+        $response = $this->actingAs($otherUser)->get('/books/'.$book->id.'/edit');
 
         $response->assertForbidden();
     }
@@ -137,7 +137,7 @@ class BookTest extends TestCase
             'user_id' => $user->id,
         ]);
 
-        $response = $this->actingAs($user)->delete('/books/' . $book->id);
+        $response = $this->actingAs($user)->delete('/books/'.$book->id);
 
         $response->assertRedirect('/books');
         $this->assertDatabaseMissing('books', [
@@ -154,11 +154,72 @@ class BookTest extends TestCase
             'user_id' => $owner->id,
         ]);
 
-        $response = $this->actingAs($otherUser)->delete('/books/' . $book->id);
+        $response = $this->actingAs($otherUser)->delete('/books/'.$book->id);
 
         $response->assertForbidden();
         $this->assertDatabaseHas('books', [
             'id' => $book->id,
         ]);
     }
+
+    // 登録者本人が書籍を更新できること
+public function test_book_owner_can_update_book(): void
+{
+    $user = User::factory()->create();
+    $genre = Genre::create(['name' => '更新後ジャンル']);
+
+    $book = Book::factory()->create([
+        'user_id' => $user->id,
+    ]);
+
+    $response = $this->actingAs($user)->put(
+        '/books/'.$book->id,
+        [
+            'title' => '更新後の書籍名',
+            'author' => '更新後の著者',
+            'isbn' => '9781234567890',
+            'published_date' => '2025-05-01',
+            'description' => '更新後の説明',
+            'genres' => [$genre->id],
+        ]
+    );
+
+    $response->assertRedirect('/books/'.$book->id);
+
+    $this->assertDatabaseHas('books', [
+        'id' => $book->id,
+        'title' => '更新後の書籍名',
+        'author' => '更新後の著者',
+    ]);
+}
+
+// 他のユーザーは書籍を更新できないこと
+public function test_other_user_cannot_update_book(): void
+{
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    $book = Book::factory()->create([
+        'user_id' => $owner->id,
+        'title' => '元の書籍名',
+    ]);
+
+    $response = $this->actingAs($otherUser)->put(
+        '/books/'.$book->id,
+        [
+            'title' => '変更を試みた書籍名',
+            'author' => '別の著者',
+            'isbn' => '9781234567890',
+            'published_date' => '2025-05-01',
+        ]
+    );
+
+    $response->assertForbidden();
+
+    $this->assertDatabaseHas('books', [
+        'id' => $book->id,
+        'title' => '元の書籍名',
+    ]);
+}
+
 }

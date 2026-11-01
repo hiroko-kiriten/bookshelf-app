@@ -28,7 +28,7 @@ class FavoriteTest extends TestCase
         $book = Book::factory()->create();
 
         $response = $this->actingAs($user)->post(
-             '/favorites/' . $book->id . '/toggle'
+            '/favorites/'.$book->id.'/toggle'
         );
 
         $this->assertDatabaseHas('favorites', [
@@ -48,8 +48,8 @@ class FavoriteTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post(
-            '/favorites/' . $book->id . '/toggle'
-    );    
+            '/favorites/'.$book->id.'/toggle'
+        );
 
         $this->assertDatabaseMissing('favorites', [
             'user_id' => $user->id,
@@ -70,7 +70,7 @@ class FavoriteTest extends TestCase
     {
         $book = Book::factory()->create();
 
-        $response = $this->post('/favorites/' . $book->id . '/toggle');
+        $response = $this->post('/favorites/'.$book->id.'/toggle');
 
         $response->assertRedirect('/login');
 

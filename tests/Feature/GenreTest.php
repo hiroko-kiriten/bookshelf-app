@@ -6,6 +6,7 @@ use App\Models\Genre;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Models\Book;
 
 class GenreTest extends TestCase
 {
@@ -13,13 +14,13 @@ class GenreTest extends TestCase
 
     // ジャンル一覧を表示できること
     public function test_genre_list_can_be_displayed(): void
-{
-    $user = User::factory()->create();
+    {
+        $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->get('/genres');
+        $response = $this->actingAs($user)->get('/genres');
 
-    $response->assertOk();
-}
+        $response->assertOk();
+    }
 
     // ジャンル登録画面を表示できること
     public function test_genre_creation_page_can_be_displayed(): void
@@ -47,17 +48,17 @@ class GenreTest extends TestCase
 
     // ジャンル詳細を表示できること
     public function test_genre_detail_can_be_displayed(): void
-{
-    $user = User::factory()->create();
+    {
+        $user = User::factory()->create();
 
-    $genre = Genre::create([
-        'name' => 'ミステリー',
-    ]);
+        $genre = Genre::create([
+            'name' => 'ミステリー',
+        ]);
 
-    $response = $this->actingAs($user)->get('/genres/' . $genre->id);
+        $response = $this->actingAs($user)->get('/genres/'.$genre->id);
 
-    $response->assertOk();
-}
+        $response->assertOk();
+    }
 
     // ジャンル編集画面を表示できること
     public function test_genre_edit_page_can_be_displayed(): void
@@ -69,7 +70,7 @@ class GenreTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(
-            '/genres/' . $genre->id . '/edit'
+            '/genres/'.$genre->id.'/edit'
         );
 
         $response->assertOk();
@@ -85,7 +86,7 @@ class GenreTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->put(
-            '/genres/' . $genre->id,
+            '/genres/'.$genre->id,
             [
                 'name' => 'ファンタジー',
             ]
@@ -107,7 +108,7 @@ class GenreTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->delete(
-            '/genres/' . $genre->id
+            '/genres/'.$genre->id
         );
 
         $this->assertDatabaseMissing('genres', [
@@ -122,4 +123,46 @@ class GenreTest extends TestCase
 
         $response->assertRedirect('/login');
     }
+
+    // 同じ名前のジャンルを重複登録できないこと
+public function test_user_cannot_create_duplicate_genre(): void
+{
+    $user = User::factory()->create();
+
+    Genre::create([
+        'name' => 'ミステリー',
+    ]);
+
+    $response = $this->actingAs($user)->post('/genres', [
+        'name' => 'ミステリー',
+    ]);
+
+    $response->assertSessionHasErrors('name');
+
+    $this->assertDatabaseCount('genres', 1);
+}
+
+// 書籍が紐づいているジャンルは削除できないこと
+public function test_genre_with_books_cannot_be_deleted(): void
+{
+    $user = User::factory()->create();
+
+    $genre = Genre::create([
+        'name' => 'ミステリー',
+    ]);
+
+    $book = Book::factory()->create();
+
+    $genre->books()->attach($book->id);
+
+    $response = $this->actingAs($user)->delete(
+        '/genres/'.$genre->id
+    );
+
+    $response->assertForbidden();
+
+    $this->assertDatabaseHas('genres', [
+        'id' => $genre->id,
+    ]);
+}
 }
