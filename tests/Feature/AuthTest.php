@@ -63,47 +63,47 @@ class AuthTest extends TestCase
     }
 
     // 会員登録画面が表示されること
-public function test_register_page_can_be_displayed(): void
-{
-    $response = $this->get('/register');
+    public function test_register_page_can_be_displayed(): void
+    {
+        $response = $this->get('/register');
 
-    $response->assertOk();
-}
+        $response->assertOk();
+    }
 
-// 正しい情報で会員登録できること
-public function test_user_can_register(): void
-{
-    $response = $this->post('/register', [
-        'name' => 'テストユーザー',
-        'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
+    // 正しい情報で会員登録できること
+    public function test_user_can_register(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'テストユーザー',
+            'email' => 'test@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
 
-    $this->assertDatabaseHas('users', [
-        'name' => 'テストユーザー',
-        'email' => 'test@example.com',
-    ]);
+        $this->assertDatabaseHas('users', [
+            'name' => 'テストユーザー',
+            'email' => 'test@example.com',
+        ]);
 
-    $this->assertAuthenticated();
-}
+        $this->assertAuthenticated();
+    }
 
- // パスワード確認が一致しない場合は登録できないこと
-public function test_user_cannot_register_with_mismatched_password_confirmation(): void
-{
-    $response = $this->post('/register', [
-        'name' => 'テストユーザー',
-        'email' => 'mismatch@example.com',
-        'password' => 'password123',
-        'password_confirmation' => 'different123',
-    ]);
+    // パスワード確認が一致しない場合は登録できないこと
+    public function test_user_cannot_register_with_mismatched_password_confirmation(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'テストユーザー',
+            'email' => 'mismatch@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'different123',
+        ]);
 
-    $response->assertSessionHasErrors('password');
+        $response->assertSessionHasErrors('password');
 
-    $this->assertDatabaseMissing('users', [
-        'email' => 'mismatch@example.com',
-    ]);
+        $this->assertDatabaseMissing('users', [
+            'email' => 'mismatch@example.com',
+        ]);
 
-    $this->assertGuest();
-}
+        $this->assertGuest();
+    }
 }

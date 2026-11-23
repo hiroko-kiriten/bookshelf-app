@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Book;
+use App\Models\Genre;
 use App\Models\Review;
 use App\Models\User;
-use App\Models\Genre;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -71,16 +71,17 @@ class BookApiTest extends TestCase
         $response->assertOk();
     }
 
-        // 公開APIで未ログインでも書籍を登録できること
-    public function test_guest_can_create_book_through_api(): void
+    // 認証済みユーザーがAPIで書籍を登録できること
+    public function test_authenticated_user_can_create_book_through_api(): void
     {
         $user = User::factory()->create();
-        $genre = Genre::create([
-    'name' => 'APIテストジャンル',
-]);
+        $token = $user->createToken('test-token')->plainTextToken;
 
-        $response = $this->postJson('/api/v1/books', [
-            'user_id' => $user->id,
+        $genre = Genre::create([
+            'name' => 'APIテストジャンル',
+        ]);
+
+        $response = $this->withToken($token)->postJson('/api/v1/books', [
             'title' => 'API登録テスト',
             'author' => 'テスト著者',
             'isbn' => '9784123456789',
@@ -101,39 +102,29 @@ class BookApiTest extends TestCase
         ]);
     }
 
-    // 登録者IDが存在しない場合はバリデーションエラーになること
-    public function test_api_book_creation_rejects_invalid_user_id(): void
+    // 未認証ユーザーはAPIで書籍を登録できないこと
+    public function test_guest_cannot_create_book_through_api(): void
     {
-        $genre = Genre::create([
-    'name' => 'APIテストジャンル',
-]);
+        $response = $this->postJson('/api/v1/books', []);
 
-        $response = $this->postJson('/api/v1/books', [
-            'user_id' => 99999,
-            'title' => 'API登録テスト',
-            'author' => 'テスト著者',
-            'isbn' => '9784123456789',
-            'published_date' => '2026-01-01',
-            'genres' => [$genre->id],
-        ]);
-
-        $response->assertUnprocessable()
-            ->assertJsonPath(
-                'errors.user_id.0',
-                '指定された登録者は存在しません。'
-            );
+        $response->assertUnauthorized();
     }
 
-    // 公開APIで書籍を更新できること
-    public function test_guest_can_update_book_through_api(): void
+    // 認証済みの所有者がAPIで書籍を更新できること
+    public function test_authenticated_owner_can_update_book_through_api(): void
     {
-        $book = Book::factory()->create();
-        $genre = Genre::create([
-    'name' => 'APIテストジャンル',
-]);
+        $user = User::factory()->create();
+        $token = $user->createToken('test-token')->plainTextToken;
 
-        $response = $this->putJson('/api/v1/books/'.$book->id, [
-            'user_id' => $book->user_id,
+        $book = Book::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $genre = Genre::create([
+            'name' => 'APIテストジャンル',
+        ]);
+
+        $response = $this->withToken($token)->putJson('/api/v1/books/'.$book->id, [
             'title' => 'API更新テスト',
             'author' => '更新後の著者',
             'isbn' => $book->isbn,
@@ -145,19 +136,107 @@ class BookApiTest extends TestCase
 
         $this->assertDatabaseHas('books', [
             'id' => $book->id,
+            'user_id' => $user->id,
             'title' => 'API更新テスト',
             'author' => '更新後の著者',
         ]);
     }
 
-    // 公開APIで書籍と関連データを削除できること
-    public function test_guest_can_delete_book_through_api(): void
+    // 他人の書籍はAPIで更新できないこと
+    public function test_authenticated_non_owner_cannot_update_book_through_api(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $token = $otherUser->createToken('test-token')->plainTextToken;
+
+        $book = Book::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $genre = Genre::create([
+            'name' => 'APIテストジャンル',
+        ]);
+
+        $response = $this->withToken($token)->putJson('/api/v1/books/'.$book->id, [
+            'title' => '不正な更新テスト',
+            'author' => '更新後の著者',
+            'isbn' => $book->isbn,
+            'published_date' => '2026-02-01',
+            'genres' => [$genre->id],
+        ]);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'user_id' => $owner->id,
+            'title' => $book->title,
+        ]);
+    }
+
+    // 未認証ユーザーはAPIで書籍を更新できないこと
+    public function test_guest_cannot_update_book_through_api(): void
     {
         $book = Book::factory()->create();
+
+        $response = $this->putJson('/api/v1/books/'.$book->id, []);
+
+        $response->assertUnauthorized();
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+        ]);
+    }
+
+    // 未認証ユーザーはAPIで書籍を削除できないこと
+    public function test_guest_cannot_delete_book_through_api(): void
+    {
+        $book = Book::factory()->create();
+
+        $response = $this->deleteJson('/api/v1/books/'.$book->id);
+
+        $response->assertUnauthorized();
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+        ]);
+    }
+
+    // 他人の書籍はAPIで削除できないこと
+    public function test_authenticated_non_owner_cannot_delete_book_through_api(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $token = $otherUser->createToken('test-token')->plainTextToken;
+
+        $book = Book::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->withToken($token)
+            ->deleteJson('/api/v1/books/'.$book->id);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'user_id' => $owner->id,
+        ]);
+    }
+
+    // 認証済みの所有者がAPIで書籍と関連データを削除できること
+    public function test_authenticated_owner_can_delete_book_through_api(): void
+    {
         $user = User::factory()->create();
+        $token = $user->createToken('test-token')->plainTextToken;
+
+        $book = Book::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
         $genre = Genre::create([
-    'name' => 'APIテストジャンル',
-]);
+            'name' => 'APIテストジャンル',
+        ]);
 
         $book->genres()->attach($genre);
 
@@ -166,7 +245,8 @@ class BookApiTest extends TestCase
             'user_id' => $user->id,
         ]);
 
-        $response = $this->deleteJson('/api/v1/books/'.$book->id);
+        $response = $this->withToken($token)
+            ->deleteJson('/api/v1/books/'.$book->id);
 
         $response->assertNoContent();
 
@@ -184,7 +264,7 @@ class BookApiTest extends TestCase
         ]);
     }
 
-        // キーワードでタイトル・著者を部分一致検索できること
+    // キーワードでタイトル・著者を部分一致検索できること
     public function test_public_api_can_search_books_by_keyword(): void
     {
         $book1 = Book::factory()->create([
@@ -256,5 +336,20 @@ class BookApiTest extends TestCase
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['genre_id', 'per_page']);
+    }
+
+    // 無効化されたトークンではAPIで書籍を登録できないこと
+    public function test_invalidated_token_cannot_create_book_through_api(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('test-token');
+
+        // 発行したAPIトークンを無効化する
+        $token->accessToken->delete();
+
+        $response = $this->withToken($token->plainTextToken)
+            ->postJson('/api/v1/books', []);
+
+        $response->assertUnauthorized();
     }
 }

@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Book;
 use App\Models\Genre;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\Book;
 
 class GenreTest extends TestCase
 {
@@ -125,44 +125,44 @@ class GenreTest extends TestCase
     }
 
     // 同じ名前のジャンルを重複登録できないこと
-public function test_user_cannot_create_duplicate_genre(): void
-{
-    $user = User::factory()->create();
+    public function test_user_cannot_create_duplicate_genre(): void
+    {
+        $user = User::factory()->create();
 
-    Genre::create([
-        'name' => 'ミステリー',
-    ]);
+        Genre::create([
+            'name' => 'ミステリー',
+        ]);
 
-    $response = $this->actingAs($user)->post('/genres', [
-        'name' => 'ミステリー',
-    ]);
+        $response = $this->actingAs($user)->post('/genres', [
+            'name' => 'ミステリー',
+        ]);
 
-    $response->assertSessionHasErrors('name');
+        $response->assertSessionHasErrors('name');
 
-    $this->assertDatabaseCount('genres', 1);
-}
+        $this->assertDatabaseCount('genres', 1);
+    }
 
-// 書籍が紐づいているジャンルは削除できないこと
-public function test_genre_with_books_cannot_be_deleted(): void
-{
-    $user = User::factory()->create();
+    // 書籍が紐づいているジャンルは削除できないこと
+    public function test_genre_with_books_cannot_be_deleted(): void
+    {
+        $user = User::factory()->create();
 
-    $genre = Genre::create([
-        'name' => 'ミステリー',
-    ]);
+        $genre = Genre::create([
+            'name' => 'ミステリー',
+        ]);
 
-    $book = Book::factory()->create();
+        $book = Book::factory()->create();
 
-    $genre->books()->attach($book->id);
+        $genre->books()->attach($book->id);
 
-    $response = $this->actingAs($user)->delete(
-        '/genres/'.$genre->id
-    );
+        $response = $this->actingAs($user)->delete(
+            '/genres/'.$genre->id
+        );
 
-    $response->assertForbidden();
+        $response->assertForbidden();
 
-    $this->assertDatabaseHas('genres', [
-        'id' => $genre->id,
-    ]);
-}
+        $this->assertDatabaseHas('genres', [
+            'id' => $genre->id,
+        ]);
+    }
 }

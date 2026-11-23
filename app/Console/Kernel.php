@@ -12,7 +12,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // 毎日午前9時に読書計画の通知処理を実行する
+        $schedule->command('app:send-reading-plan-notifications')
+            ->dailyAt('09:00')
+            ->timezone('Asia/Tokyo');
     }
 
     /**

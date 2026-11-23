@@ -13,32 +13,32 @@ use Illuminate\Support\Facades\DB;
 
 class BookApiController extends Controller
 {
-/**
- * 書籍一覧を取得する
- */
-public function index(IndexBookApiRequest $request)
-{
-    $validated = $request->validated();
+    /**
+     * 書籍一覧を取得する
+     */
+    public function index(IndexBookApiRequest $request)
+    {
+        $validated = $request->validated();
 
-    $books = Book::with('genres')
-        ->withAvg('reviews', 'rating')
-        ->withCount('reviews')
-        ->when($validated['keyword'] ?? null, function ($query, $keyword) {
-            $query->where(function ($query) use ($keyword) {
-                $query->where('title', 'like', "%{$keyword}%")
-                    ->orWhere('author', 'like', "%{$keyword}%");
-            });
-        })
-        ->when($validated['genre_id'] ?? null, function ($query, $genreId) {
-            $query->whereHas('genres', function ($query) use ($genreId) {
-                $query->where('genres.id', $genreId);
-            });
-        })
-        ->orderByDesc('created_at')
-        ->paginate($validated['per_page'] ?? 20);
+        $books = Book::with('genres')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->when($validated['keyword'] ?? null, function ($query, $keyword) {
+                $query->where(function ($query) use ($keyword) {
+                    $query->where('title', 'like', "%{$keyword}%")
+                        ->orWhere('author', 'like', "%{$keyword}%");
+                });
+            })
+            ->when($validated['genre_id'] ?? null, function ($query, $genreId) {
+                $query->whereHas('genres', function ($query) use ($genreId) {
+                    $query->where('genres.id', $genreId);
+                });
+            })
+            ->orderByDesc('created_at')
+            ->paginate($validated['per_page'] ?? 20);
 
-    return BookResource::collection($books);
-}
+        return BookResource::collection($books);
+    }
 
     /**
      * 書籍詳細を取得する
@@ -68,8 +68,8 @@ public function index(IndexBookApiRequest $request)
         $validated = $request->validated();
         $genreIds = $validated['genres'];
 
-        $book = new Book();
-        $book->user_id = $validated['user_id'];
+        $book = new Book;
+        $book->user_id = $request->user()->id;
         $book->title = $validated['title'];
         $book->author = $validated['author'];
         $book->isbn = $validated['isbn'];
@@ -94,10 +94,11 @@ public function index(IndexBookApiRequest $request)
      */
     public function update(UpdateBookApiRequest $request, Book $book)
     {
+        $this->authorize('update', $book);
+
         $validated = $request->validated();
         $genreIds = $validated['genres'];
 
-        $book->user_id = $validated['user_id'];
         $book->title = $validated['title'];
         $book->author = $validated['author'];
         $book->isbn = $validated['isbn'];
@@ -120,6 +121,8 @@ public function index(IndexBookApiRequest $request)
      */
     public function destroy(Book $book)
     {
+        $this->authorize('delete', $book);
+
         DB::transaction(function () use ($book) {
             $reviews = $book->reviews;
 

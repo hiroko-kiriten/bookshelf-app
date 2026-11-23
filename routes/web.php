@@ -3,7 +3,10 @@
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\GenreController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RankingController;
+use App\Http\Controllers\ReadingPlanController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ReviewLikeController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +26,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/books', [BookController::class, 'store'])
         ->name('books.store');
+
+    // ISBNからGoogle Books APIで書籍情報を検索する
+    Route::get('/books/isbn/{isbn}', [BookController::class, 'searchByIsbn'])
+        ->name('books.isbn.search');
 });
 
 // 書籍詳細は誰でも閲覧できる
@@ -85,3 +92,46 @@ Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])
 Route::post('/reviews/{review}/like', [ReviewLikeController::class, 'toggle'])
     ->middleware('auth')
     ->name('reviews.like');
+
+// 読書計画関連のルート（ログインユーザーのみ）
+Route::middleware('auth')->group(function () {
+    // 読書計画一覧
+    Route::get('/reading-plans', [ReadingPlanController::class, 'index'])
+        ->name('reading-plans.index');
+
+    // 読書計画登録画面
+    Route::get('/reading-plans/create', [ReadingPlanController::class, 'create'])
+        ->name('reading-plans.create');
+
+    // 読書計画登録
+    Route::post('/reading-plans', [ReadingPlanController::class, 'store'])
+        ->name('reading-plans.store');
+
+    // 読書計画編集画面
+    Route::get('/reading-plans/{readingPlan}/edit', [ReadingPlanController::class, 'edit'])
+        ->name('reading-plans.edit');
+
+    // 読書計画更新
+    Route::put('/reading-plans/{readingPlan}', [ReadingPlanController::class, 'update'])
+        ->name('reading-plans.update');
+
+    // 読了処理
+    Route::post('/reading-plans/{readingPlan}/complete', [ReadingPlanController::class, 'complete'])
+        ->name('reading-plans.complete');
+
+    // 読書計画削除
+    Route::delete('/reading-plans/{readingPlan}', [ReadingPlanController::class, 'destroy'])
+        ->name('reading-plans.destroy');
+
+    // 通知一覧
+    Route::get('/notifications', [NotificationController::class, 'index'])
+        ->name('notifications.index');
+
+    // 通知を既読にする
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
+        ->name('notifications.read');
+
+    // マイ読書レポート
+    Route::get('/reports', [ReportController::class, 'index'])
+        ->name('reports.index');
+});

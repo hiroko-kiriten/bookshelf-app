@@ -1,7 +1,7 @@
 # COACHTECH BookShelfアプリ
 
 書籍の登録・検索・レビュー投稿ができる書籍レビューアプリです。
-ユーザー同士で書籍の評価や感想を共有できます。
+ユーザー同士で書籍の評価や感想を共有でき、読書計画や読書レポートを通じて読書活動を管理できます。
 
 ## 作成者
 
@@ -11,108 +11,147 @@
 
 - PHP 8.5.12
 - Laravel 10.50.3
-- MySQL 8.4.9
+- MySQL 8.4
+- Docker / Laravel Sail
 - Laravel Fortify
 - Laravel Sanctum
 - JavaScript
-- Alpine.js 3.17.5
-- Vite 5
-- Docker / Laravel Sail
-- Node.js 24.22.1
-- npm 12.2.1
+- Alpine.js
+- Vite
+- Tailwind CSS
 
 ## ER図
 
 ![ER図](docs/er-diagram.png)
 
-## 開発環境URL
+## URL
 
-- アプリケーション：http://localhost
+http://localhost
 
-## 動作環境
+## 環境構築
 
-- Docker
-- Docker Compose
-- PHP 8.5
-- MySQL 8.4
+### 1. リポジトリのクローン
 
-## 環境構築手順
+git clone https://github.com/hiroko-kiriten/bookshelf-app.git
 
-1. リポジトリをクローンする
+### 2. ディレクトリ移動
 
-   ```bash
-   git clone https://github.com/hiroko-kiriten/bookshelf-app.git
-   cd bookshelf-app
-   ```
+cd bookshelf-app
 
-2. 環境設定ファイルを作成する
+### 3. 環境設定ファイルの作成
 
-   ```bash
-   cp .env.example .env
-   ```
+cp .env.example .env
 
-3. Composerの依存パッケージをインストールする
+### 4. Composer依存関係のインストール
 
-   ```bash
-   docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php84-composer:latest composer install
-   ```
+docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php84-composer:latest composer install
 
-4. Sailを起動する
+### 5. Dockerコンテナの起動
 
-   ```bash
-   ./vendor/bin/sail up -d
-   ```
+./vendor/bin/sail up -d
 
-5. アプリケーションキーを生成する
+### 6. アプリケーションキーの生成
 
-   ```bash
-   ./vendor/bin/sail artisan key:generate
-   ```
+./vendor/bin/sail artisan key:generate
 
-6. マイグレーションと初期データの登録を行う
+### 7. データベースのマイグレーション・シーディング
 
-   ```bash
-   ./vendor/bin/sail artisan migrate --seed
-   ```
+./vendor/bin/sail artisan migrate --seed
 
-7. フロントエンドの依存パッケージをインストールし、ビルドする
+### 8. JavaScript依存関係のインストール
 
-   ```bash
-   ./vendor/bin/sail npm ci
-   ./vendor/bin/sail npm run build
-   ```
+./vendor/bin/sail npm ci
 
-8. ブラウザからアクセスする
+### 9. フロントエンドのビルド
 
-   http://localhost
+./vendor/bin/sail npm run build
 
-## テスト実行
+### 10. アプリケーションへのアクセス
 
-```bash
-./vendor/bin/sail artisan test
-```
+http://localhost
 
-## 機能一覧
+## 実装機能
 
-- ユーザー登録・ログイン・ログアウト
-- パスワード再設定・変更
-- 書籍一覧・詳細表示
+### ユーザー認証
+
+- ユーザー登録
+- ログイン・ログアウト
+- パスワードリセット
+- パスワード変更
+- 二段階認証
+
+### 書籍管理
+
+- 書籍一覧表示
 - 書籍登録・編集・削除
-- ジャンル一覧・登録・編集・削除
+- 書籍詳細表示
+- キーワード検索
+- ジャンルによる絞り込み
+- ソート
+- ページネーション
+- ISBNによる書籍情報検索
+
+### ジャンル管理
+
+- ジャンル登録・編集・削除
+
+### レビュー機能
+
 - レビュー投稿・編集・削除
 - レビューへのいいね
-- お気に入り登録・解除・一覧表示
-- 評価ランキング表示
 
-※書籍・レビューの編集および削除は登録者本人のみ可能です。
-※書籍一覧・詳細およびランキングは未ログインでも閲覧できます。
+### お気に入り機能
 
-## APIエンドポイント一覧
+- 書籍のお気に入り登録・解除
 
-書籍情報およびレビュー情報を取得するための公開APIです。
+### ランキング機能
 
-| HTTPメソッド | URI | 概要 |
+- 書籍ランキング表示
+
+### 読書計画機能
+
+- 読書計画の登録・編集・削除
+- 読書計画のステータス管理
+- 読了予定日の管理
+
+### 通知機能
+
+- 読了予定日に関する通知
+- 読書計画の期限管理
+- 通知の既読管理
+
+### マイ読書レポート
+
+- レビュー件数
+- 平均評価
+- 評価分布
+- 読了冊数
+- ジャンル別評価傾向
+- 高評価書籍
+
+## API
+
+### 公開API
+
+| HTTPメソッド | URI | 機能 |
 |---|---|---|
 | GET | /api/v1/books | 書籍一覧取得 |
 | GET | /api/v1/books/{book} | 書籍詳細取得 |
-| GET | /api/v1/books/{book}/reviews | 指定書籍のレビュー一覧取得 |
+| GET | /api/v1/books/{book}/reviews | 書籍レビュー取得 |
+
+### 認証が必要なAPI
+
+| HTTPメソッド | URI | 機能 |
+|---|---|---|
+| POST | /api/v1/books | 書籍登録 |
+| PUT | /api/v1/books/{book} | 書籍更新 |
+| DELETE | /api/v1/books/{book} | 書籍削除 |
+| DELETE | /api/v1/token | 認証トークン削除 |
+
+API認証にはLaravel Sanctumを使用しています。
+
+## テスト
+
+テスト実行コマンド
+
+./vendor/bin/sail artisan test

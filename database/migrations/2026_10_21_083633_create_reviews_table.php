@@ -25,4 +25,5 @@ return new class extends Migration
     {
         Schema::dropIfExists('reviews');
     }
-};
+};git status --short
+

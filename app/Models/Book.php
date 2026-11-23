@@ -22,6 +22,10 @@ class Book extends Model
         'image_url',
     ];
 
+    protected $casts = [
+        'published_date' => 'date',
+    ];
+
     // 書籍を登録したユーザー
     public function user(): BelongsTo
     {
@@ -44,5 +48,11 @@ class Book extends Model
     public function favorites(): HasMany
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    // 書籍に登録されている読書計画
+    public function readingPlans(): HasMany
+    {
+        return $this->hasMany(ReadingPlan::class);
     }
 }
