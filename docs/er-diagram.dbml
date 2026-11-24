@@ -1,0 +1,116 @@
+Table users {
+  id bigint [pk, increment]
+  name varchar
+  email varchar [unique]
+  password varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table books {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  title varchar
+  author varchar
+  isbn varchar [unique]
+  published_date date
+  description text
+  image_url varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table genres {
+  id bigint [pk, increment]
+  name varchar [unique]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table book_genre {
+  id bigint [pk, increment]
+  book_id bigint [not null]
+  genre_id bigint [not null]
+
+  indexes {
+    (book_id, genre_id) [unique]
+  }
+}
+
+Table favorites {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  book_id bigint [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, book_id) [unique]
+  }
+}
+
+Table reviews {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  book_id bigint [not null]
+  rating tinyint
+  comment text
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, book_id) [unique]
+  }
+}
+
+Table review_likes {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  review_id bigint [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, review_id) [unique]
+  }
+}
+
+Table reading_plans {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  book_id bigint [not null]
+  target_date date
+  completed_at timestamp
+  status varchar
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, book_id) [unique]
+    (status, target_date)
+  }
+}
+
+Table notifications {
+  id char(36) [pk]
+  type varchar
+  notifiable_type varchar
+  notifiable_id bigint
+  data text
+  read_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: books.user_id > users.id
+Ref: book_genre.book_id > books.id
+Ref: book_genre.genre_id > genres.id
+Ref: favorites.user_id > users.id
+Ref: favorites.book_id > books.id
+Ref: reviews.user_id > users.id
+Ref: reviews.book_id > books.id
+Ref: review_likes.user_id > users.id
+Ref: review_likes.review_id > reviews.id
+Ref: reading_plans.user_id > users.id
+Ref: reading_plans.book_id > books.id
+  Note: 'notifiable_type と notifiable_id によるポリモーフィック関連。通常の外部キー制約は設定しない。'

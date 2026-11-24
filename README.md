@@ -10,7 +10,7 @@
 ## 使用技術
 
 - PHP 8.5.12
-- Laravel 10.50.3
+- Laravel 12.73.0
 - MySQL 8.4
 - Docker / Laravel Sail
 - Laravel Fortify
@@ -44,7 +44,11 @@ cp .env.example .env
 
 ### 4. Composer依存関係のインストール
 
-docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php84-composer:latest composer install
+docker run --rm \
+    -v "$(pwd):/app" \
+    -w /app \
+    --entrypoint /usr/bin/composer \
+    sail-8.5/app install
 
 ### 5. Dockerコンテナの起動
 
